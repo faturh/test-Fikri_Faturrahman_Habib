@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import MenuTree from '@/components/menu/MenuTree';
 import MenuForm from '@/components/menu/MenuForm';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchMenus, selectItem, addMenu, MenuItem } from '@/store/menusSlice';
+import { fetchMenus, selectItem, addMenu, MenuItem, expandAll, collapseAll } from '@/store/menusSlice';
 
 export default function Home() {
     const dispatch = useAppDispatch();
@@ -19,11 +19,11 @@ export default function Home() {
     };
 
     const handleExpandAll = () => {
-        // Implement logic or dispatch action if state is managed globally
+        dispatch(expandAll());
     };
 
     const handleCollapseAll = () => {
-         // Implement logic
+        dispatch(collapseAll());
     };
 
   return (

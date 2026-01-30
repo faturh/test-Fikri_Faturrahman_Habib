@@ -13,6 +13,7 @@ export interface MenuItem {
 interface MenusState {
   items: MenuItem[];
   selectedItem: MenuItem | null;
+  expandedIds: string[];
   loading: boolean;
   error: string | null;
 }
@@ -20,6 +21,7 @@ interface MenusState {
 const initialState: MenusState = {
   items: [],
   selectedItem: null,
+  expandedIds: [],
   loading: false,
   error: null,
 };
@@ -30,18 +32,21 @@ export const fetchMenus = createAsyncThunk('menus/fetchMenus', async () => {
   return response.data;
 });
 
-export const addMenu = createAsyncThunk('menus/addMenu', async (newMenu: { name: string; depth: number; parentId?: string }) => {
+export const addMenu = createAsyncThunk('menus/addMenu', async (newMenu: { name: string; depth: number; parentId?: string | null }, { dispatch }) => {
   const response = await api.post('/menus', newMenu);
+  dispatch(fetchMenus());
   return response.data;
 });
 
-export const updateMenu = createAsyncThunk('menus/updateMenu', async ({ id, data }: { id: string; data: Partial<MenuItem> }) => {
+export const updateMenu = createAsyncThunk('menus/updateMenu', async ({ id, data }: { id: string; data: Partial<MenuItem> }, { dispatch }) => {
   const response = await api.patch(`/menus/${id}`, data);
+  dispatch(fetchMenus());
   return response.data;
 });
 
-export const deleteMenu = createAsyncThunk('menus/deleteMenu', async (id: string) => {
+export const deleteMenu = createAsyncThunk('menus/deleteMenu', async (id: string, { dispatch }) => {
   await api.delete(`/menus/${id}`);
+  dispatch(fetchMenus());
   return id;
 });
 
@@ -52,6 +57,29 @@ const menusSlice = createSlice({
     selectItem: (state, action: PayloadAction<MenuItem | null>) => {
       state.selectedItem = action.payload;
     },
+    toggleExpand: (state, action: PayloadAction<string>) => {
+      const id = action.payload;
+      if (state.expandedIds.includes(id)) {
+        state.expandedIds = state.expandedIds.filter(i => i !== id);
+      } else {
+        state.expandedIds.push(id);
+      }
+    },
+    expandAll: (state) => {
+        // We'll collect all IDs from the items recursively
+        const allIds: string[] = [];
+        const collectIds = (items: MenuItem[]) => {
+            items.forEach(item => {
+                allIds.push(item.id);
+                if (item.children) collectIds(item.children);
+            });
+        };
+        collectIds(state.items);
+        state.expandedIds = allIds;
+    },
+    collapseAll: (state) => {
+        state.expandedIds = [];
+    }
   },
   extraReducers: (builder) => {
     // Fetch
@@ -62,33 +90,17 @@ const menusSlice = createSlice({
     builder.addCase(fetchMenus.fulfilled, (state, action) => {
       state.loading = false;
       state.items = action.payload;
+      // Optionally expand top level by default
+      if (state.expandedIds.length === 0 && action.payload.length > 0) {
+          state.expandedIds = action.payload.map((i: MenuItem) => i.id);
+      }
     });
     builder.addCase(fetchMenus.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message || 'Failed to fetch menus';
     });
-
-    // Add
-    builder.addCase(addMenu.fulfilled, (state) => {
-      // Re-fetch to simpler update tree? Or manually insert?
-      // For simplicity in tree structures, re-fetching is safer unless optimized.
-      // But let's try to optimistic update or just trigger re-fetch in component?
-      // Let's just append for now, but tree structure makes it hard.
-      // We'll rely on fetching again or simple state reload for now.
-    });
-
-    // Update
-    builder.addCase(updateMenu.fulfilled, (state, action) => {
-        // Complex to update deeply nested tree.
-        // We will rely on re-fetching in the component or refined logic later.
-    });
-    
-    // Delete
-    builder.addCase(deleteMenu.fulfilled, (state, action) => {
-       // Same here, tree deletion is complex.
-    });
   },
 });
 
-export const { selectItem } = menusSlice.actions;
+export const { selectItem, toggleExpand, expandAll, collapseAll } = menusSlice.actions;
 export default menusSlice.reducer;
