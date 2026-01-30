@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0052cc;
+  --color-secondary: #172B4D;
+  --color-background-light: #ffffff;
+  --color-background-dark: #111827;
+  --color-surface-light: #f4f5f7;
+  --color-surface-dark: #1f2937;
+  --color-border-light: #e5e7eb;
+  --color-border-dark: #374151;
+  
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Inter", sans-serif;
+  
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+}
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+.tree-line {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background-color: #e5e7eb;
+}
+.dark .tree-line {
+    background-color: #374151;
+}
+.tree-connector {
+    position: absolute;
+    left: 0;
+    top: 1.5rem;
+    width: 1.5rem;
+    height: 1px;
+    background-color: #e5e7eb;
+}
+.dark .tree-connector {
+    background-color: #374151;
+}
