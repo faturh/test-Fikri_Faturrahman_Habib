@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   description: 'Menu Management Dashboard',
 };
 
+import { Providers } from './Providers';
+
 export default function RootLayout({
   children,
 }: {
@@ -25,10 +27,12 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background-light dark:bg-background-dark h-screen flex overflow-hidden text-slate-800 dark:text-slate-100 transition-colors duration-200 font-sans">
-        <Sidebar />
-        <main className="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark transition-colors duration-200">
-          {children}
-        </main>
+        <Providers>
+            <Sidebar />
+            <main className="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark transition-colors duration-200">
+            {children}
+            </main>
+        </Providers>
       </body>
     </html>
   );

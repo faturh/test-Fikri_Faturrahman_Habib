@@ -2,22 +2,33 @@ import { Injectable } from '@nestjs/common';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 import { PrismaService } from '../prisma.service';
+import * as fs from 'fs';
 
 @Injectable()
 export class MenusService {
   constructor(private prisma: PrismaService) {}
 
   async create(createMenuDto: CreateMenuDto) {
-    return this.prisma.menu.create({
-      data: createMenuDto,
-    });
+    try {
+        return await this.prisma.menu.create({
+          data: createMenuDto,
+        });
+    } catch (error) {
+        fs.writeFileSync('error.txt', `Create error: ${error.message}`);
+        throw error;
+    }
   }
 
   async findAll() {
-    const allMenus = await this.prisma.menu.findMany({
-        orderBy: { createdAt: 'asc' } // or arbitrary order field if added
-    });
-    return this.buildTree(allMenus);
+    try {
+        const allMenus = await this.prisma.menu.findMany({
+            orderBy: { createdAt: 'asc' }
+        });
+        return this.buildTree(allMenus);
+    } catch (error) {
+        fs.writeFileSync('error.txt', `FindAll error: ${error.message}`);
+        throw error;
+    }
   }
 
   async findOne(id: string) {

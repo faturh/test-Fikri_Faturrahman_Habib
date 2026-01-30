@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-
-export interface MenuItem {
-  id: string;
-  name: string;
-  depth: number;
-  parentId?: string | null;
-  children?: MenuItem[];
-}
+import { MenuItem } from '@/store/menusSlice';
 
 interface MenuTreeProps {
   items: MenuItem[];
