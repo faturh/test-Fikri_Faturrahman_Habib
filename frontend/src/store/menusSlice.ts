@@ -7,7 +7,7 @@ export interface MenuItem {
   depth: number;
   parentId?: string | null;
   children?: MenuItem[];
-  parent?: MenuItem | null; // For display purposes
+  parent?: MenuItem | null;
 }
 
 interface MenusState {
@@ -16,6 +16,7 @@ interface MenusState {
   expandedIds: string[];
   loading: boolean;
   error: string | null;
+  notification: { message: string, type: 'success' | 'error' | 'info' } | null;
 }
 
 const initialState: MenusState = {
@@ -24,6 +25,7 @@ const initialState: MenusState = {
   expandedIds: [],
   loading: false,
   error: null,
+  notification: null,
 };
 
 // Async Thunks
@@ -33,21 +35,39 @@ export const fetchMenus = createAsyncThunk('menus/fetchMenus', async () => {
 });
 
 export const addMenu = createAsyncThunk('menus/addMenu', async (newMenu: { name: string; depth: number; parentId?: string | null }, { dispatch }) => {
-  const response = await api.post('/menus', newMenu);
-  dispatch(fetchMenus());
-  return response.data;
+  try {
+    const response = await api.post('/menus', newMenu);
+    dispatch(setNotification({ message: 'Menu item added successfully', type: 'success' }));
+    dispatch(fetchMenus());
+    return response.data;
+  } catch (err: any) {
+    dispatch(setNotification({ message: 'Failed to add menu item', type: 'error' }));
+    throw err;
+  }
 });
 
 export const updateMenu = createAsyncThunk('menus/updateMenu', async ({ id, data }: { id: string; data: Partial<MenuItem> }, { dispatch }) => {
-  const response = await api.patch(`/menus/${id}`, data);
-  dispatch(fetchMenus());
-  return response.data;
+  try {
+    const response = await api.patch(`/menus/${id}`, data);
+    dispatch(setNotification({ message: 'Menu item updated successfully', type: 'success' }));
+    dispatch(fetchMenus());
+    return response.data;
+  } catch (err: any) {
+    dispatch(setNotification({ message: 'Failed to update menu item', type: 'error' }));
+    throw err;
+  }
 });
 
 export const deleteMenu = createAsyncThunk('menus/deleteMenu', async (id: string, { dispatch }) => {
-  await api.delete(`/menus/${id}`);
-  dispatch(fetchMenus());
-  return id;
+  try {
+    await api.delete(`/menus/${id}`);
+    dispatch(setNotification({ message: 'Menu item deleted successfully', type: 'success' }));
+    dispatch(fetchMenus());
+    return id;
+  } catch (err: any) {
+    dispatch(setNotification({ message: 'Failed to delete menu item', type: 'error' }));
+    throw err;
+  }
 });
 
 const menusSlice = createSlice({
@@ -66,7 +86,6 @@ const menusSlice = createSlice({
       }
     },
     expandAll: (state) => {
-        // We'll collect all IDs from the items recursively
         const allIds: string[] = [];
         const collectIds = (items: MenuItem[]) => {
             items.forEach(item => {
@@ -79,10 +98,15 @@ const menusSlice = createSlice({
     },
     collapseAll: (state) => {
         state.expandedIds = [];
+    },
+    setNotification: (state, action: PayloadAction<{ message: string, type: 'success' | 'error' | 'info' } | null>) => {
+        state.notification = action.payload;
+    },
+    clearNotification: (state) => {
+        state.notification = null;
     }
   },
   extraReducers: (builder) => {
-    // Fetch
     builder.addCase(fetchMenus.pending, (state) => {
       state.loading = true;
       state.error = null;
@@ -90,7 +114,6 @@ const menusSlice = createSlice({
     builder.addCase(fetchMenus.fulfilled, (state, action) => {
       state.loading = false;
       state.items = action.payload;
-      // Optionally expand top level by default
       if (state.expandedIds.length === 0 && action.payload.length > 0) {
           state.expandedIds = action.payload.map((i: MenuItem) => i.id);
       }
@@ -99,8 +122,13 @@ const menusSlice = createSlice({
       state.loading = false;
       state.error = action.error.message || 'Failed to fetch menus';
     });
+    builder.addCase(deleteMenu.fulfilled, (state, action) => {
+        if (state.selectedItem?.id === action.payload) {
+            state.selectedItem = null;
+        }
+    });
   },
 });
 
-export const { selectItem, toggleExpand, expandAll, collapseAll } = menusSlice.actions;
+export const { selectItem, toggleExpand, expandAll, collapseAll, setNotification, clearNotification } = menusSlice.actions;
 export default menusSlice.reducer;

@@ -11,6 +11,7 @@ model Menu {
   id        String   @id @default(uuid())
   name      String
   depth     Int
+  order     Int      @default(0)
   parentId  String?
   parent    Menu?    @relation("MenuHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children  Menu[]   @relation("MenuHierarchy")
